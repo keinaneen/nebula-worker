@@ -9,12 +9,14 @@ from nebula.enum import JobState
 from nebula.jobs import Action, get_job
 from services.conv.ffmpeg import NebulaFFMPEG
 from services.conv.melt import NebulaMelt
+from services.conv.playoutCopy import NebulaPlayoutCopy
 
 FORCE_INFO_EVERY = 20
 
 available_encoders = {
     "ffmpeg": NebulaFFMPEG,
     "melt": NebulaMelt,
+    "playoutCopy": NebulaPlayoutCopy,
 }
 
 
