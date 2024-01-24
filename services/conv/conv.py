@@ -98,8 +98,7 @@ class Service(BaseService):
         for id_task, task in enumerate(tasks):
             try:
                 using = task.attrib["mode"]
-                if using not in available_encoders:
-                    continue
+                available_encoders[using]
             except KeyError:
                 self.job.fail(
                     f"Wrong encoder type specified for task {id_task}", critical=True
