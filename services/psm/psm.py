@@ -154,6 +154,7 @@ class PlayoutStorageTool:
                 ]
                 and self.send_action
                 and asset["status"] == ObjectStatus.ONLINE
+                and asset["media_type"] == 1
                 and scheduled
             ):
                 result = send_to(
