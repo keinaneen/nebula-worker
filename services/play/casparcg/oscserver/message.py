@@ -18,7 +18,7 @@ from .osc_types import (
 )
 
 
-class OSCMessage(object):
+class OSCMessage:
     """Representation of a parsed datagram representing an OSC message.
 
     An OSC message consists of an OSC Address Pattern followed by an OSC
@@ -27,7 +27,7 @@ class OSCMessage(object):
 
     def __init__(self, dgram: bytes) -> None:
         self._dgram = dgram
-        self._parameters = []
+        self._parameters: list[Any] = []
         self._parse_datagram()
 
     def _parse_datagram(self) -> None:
@@ -42,13 +42,12 @@ class OSCMessage(object):
             if type_tag.startswith(","):
                 type_tag = type_tag[1:]
 
-            params = []
+            params: list[Any] = []
             param_stack = [params]
             # Parse each parameter given its type.
+            val: Any = None
             for param in type_tag:
-                if param == "i":  # Integer.
-                    val, index = get_int(self._dgram, index)
-                elif param == "h":  # Integer.
+                if param == "i" or param == "h":  # Integer.
                     val, index = get_int(self._dgram, index)
                 elif param == "f":  # Float.
                     val, index = get_float(self._dgram, index)
@@ -69,15 +68,13 @@ class OSCMessage(object):
                 elif param == "F":  # False.
                     val = False
                 elif param == "[":  # Array start.
-                    array = []
+                    array: list[Any] = []
                     param_stack[-1].append(array)
                     param_stack.append(array)
                 elif param == "]":  # Array stop.
                     if len(param_stack) < 2:
                         raise OSCParseError(
-                            "Unexpected closing bracket in type tag: {0}".format(
-                                type_tag
-                            )
+                            f"Unexpected closing bracket in type tag: {type_tag}"
                         )
                     param_stack.pop()
                 # TODO: Support more exotic types as described in the specification.
@@ -86,12 +83,10 @@ class OSCMessage(object):
                 if param not in "[]":
                     param_stack[-1].append(val)
             if len(param_stack) != 1:
-                raise OSCParseError(
-                    "Missing closing bracket in type tag: {0}".format(type_tag)
-                )
+                raise OSCParseError(f"Missing closing bracket in type tag: {type_tag}")
             self._parameters = params
         except OSCParseError as pe:
-            raise OSCParseError("Found incorrect datagram, ignoring it", pe)
+            raise OSCParseError("Found incorrect datagram, ignoring it", pe) from pe
 
     @property
     def address(self) -> str:

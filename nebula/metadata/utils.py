@@ -20,7 +20,7 @@ def filter_match(filter_string: str, value: str) -> bool:
                 return True
         return False
     else:
-        return not not re.match(filter_string, value)
+        return bool(re.match(filter_string, value))
 
 
 @lru_cache(maxsize=512)
@@ -61,9 +61,9 @@ def get_cs_titles(urn: str, values: tuple[str], lang: LanguageCode = "en") -> li
             if (csval := schema.get(value)) is None:
                 result.append(str(value))
             else:
-                if (alias := csval.aliases.get(lang)) is not None:
-                    result.append(alias.title)
-                elif (alias := csval.aliases.get("en")) is not None:
+                if (alias := csval.aliases.get(lang)) is not None or (
+                    alias := csval.aliases.get("en")
+                ) is not None:
                     result.append(alias.title)
                 else:
                     result.append(value)
@@ -85,18 +85,21 @@ def make_cs_tree(
     if (scheme := settings.cs.get(urn)) is None:
         return []
     items = [
-        {"value": value, "title": get_cs_titles(urn, (value,), lang)[0]}
-        for value, alias in scheme.items()
+        {
+            "value": value,
+            "title": get_cs_titles(urn, (value,), lang)[0],
+        }
+        for value in scheme.values()
     ]
     if order == "value":
-        items.sort(key=lambda x: x["value"])
+        items.sort(key=lambda x: x["value"])  # type: ignore
     elif order in ["title", "alias"]:
-        items.sort(key=lambda x: unaccent(x["title"]))
+        items.sort(key=lambda x: unaccent(x["title"]))  # type: ignore
 
     parents: DefaultDict[str, list[Any]] = defaultdict(list[Any])
 
     for item in items:
-        path = item["value"].split(".")
+        path = item["value"].split(".")  # type: ignore
         parent_id = ".".join(path[:-1])
         if parent_id not in [i["value"] for i in items]:
             parent_id = ""

@@ -30,24 +30,26 @@ class Service(BaseService):
             action_settings = xml(settings)
 
             try:
-                import_storage = int(action_settings.find("id_storage").text)
+                import_storage = int(action_settings.find("id_storage").text)  # type: ignore
             except (AttributeError, ValueError):
-                import_storage = nebula.settings.system.upload_storage
+                import_storage = nebula.settings.system.upload_storage  # type: ignore
 
             try:
-                import_dir = action_settings.find("import_dir").text
+                import_dir = action_settings.find("import_dir").text  # type: ignore
             except AttributeError:
                 import_dir = nebula.settings.system.upload_dir
 
             try:
-                identifier = action_settings.find("identifier").text
-            except AttributeError:
+                identifier = action_settings.find("identifier").text  # type: ignore
+                assert identifier
+            except (AttributeError, AssertionError):
                 identifier = "id"
 
             try:
-                profile = action_settings.find("profile").text
-            except AttributeError:
-                profile = None
+                profile = action_settings.find("profile").text  # type: ignore
+                assert profile
+            except (AttributeError, AssertionError):
+                profile = "xdcamhd422-1080i50"
 
             if not (import_storage and import_dir):
                 nebula.log.error(
@@ -66,6 +68,7 @@ class Service(BaseService):
             action = ImportDefinition(
                 action_id=id,
                 import_dir=path,
+                backup_dir=None,
                 identifier=identifier,
                 profile=profile,
             )
@@ -86,7 +89,7 @@ class Service(BaseService):
                     with import_file.open("rb") as f:
                         f.seek(0, 2)
                         fsize = f.tell()
-                except IOError:
+                except OSError:
                     nebula.log.debug(f"Import file {import_file.base_name} is busy.")
                     continue
 
@@ -175,10 +178,10 @@ class Service(BaseService):
         if not os.path.isdir(target_dir):
             try:
                 os.makedirs(target_dir)
-            except IOError:
+            except OSError:
                 pass
         try:
             os.rename(asset.file_path, os.path.join(target_dir, target_fname))
-        except IOError:
+        except OSError:
             nebula.log.traceback()
             nebula.log.warning(f"Unable to create version backup of {asset}")

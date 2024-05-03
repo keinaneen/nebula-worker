@@ -1,6 +1,7 @@
 import os
 import subprocess
 import time
+from typing import Any
 
 import nebula
 from dispatch.agents import BaseAgent
@@ -52,9 +53,7 @@ def handle_samba_storage(storage: Storage):
         smbopts["vers"] = smbver
 
     if smbopts:
-        opts = " -o '{}'".format(
-            ",".join(["{}={}".format(k, smbopts[k]) for k in smbopts])
-        )
+        opts = " -o '{}'".format(",".join([f"{k}={smbopts[k]}" for k in smbopts]))
     else:
         opts = ""
 
@@ -78,7 +77,7 @@ class StorageMonitor(BaseAgent):
     def main(self):
         db = nebula.DB()
         db.query("SELECT id, settings FROM storages")
-        status = {}
+        status: dict[str, Any] = {}
 
         for id_storage, storage_settings in db.fetchall():
             storage = Storage(
